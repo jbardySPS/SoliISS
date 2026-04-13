@@ -7,168 +7,146 @@ use Illuminate\Database\Eloquent\Builder;
 
 class Solicitud extends Model
 {
-    // IMPORTANTE: PDO::CASE_LOWER convierte todas las columnas a minúsculas.
     protected $table      = 'SOLIISS.SOLICITUDES';
     protected $primaryKey = 'sol_id';
 
-    const CREATED_AT = 'sol_creado';
+    const CREATED_AT = 'sol_fecha_creacion';
     const UPDATED_AT = 'sol_actualizado';
 
-    // ── Estados del ciclo de vida ───────────────────────────────────────────
-    const BORRADOR   = 'borrador';
-    const PENDIENTE  = 'pendiente';
-    const APROBADA   = 'aprobada';
-    const RECHAZADA  = 'rechazada';
-    const EN_PROCESO = 'en_proceso';
-    const COMPLETADA = 'completada';
-    const CANCELADA  = 'cancelada';
+    // ── IDs de estado (coinciden con SOLIISS.ESTADOS_SOL) ──────────────────
+    const EST_BORRADOR    = 1;
+    const EST_ENVIADA     = 2;
+    const EST_EN_REVISION = 3;
+    const EST_APROBADA    = 4;
+    const EST_RECHAZADA   = 5;
+    const EST_ASIGNADA    = 6;
+    const EST_EN_PROGRESO = 7;
+    const EST_RESUELTA    = 8;
+    const EST_CERRADA     = 9;
 
     // ── Prioridades ─────────────────────────────────────────────────────────
-    const PRIORIDAD_BAJA  = 'baja';
-    const PRIORIDAD_MEDIA = 'media';
-    const PRIORIDAD_ALTA  = 'alta';
+    const PRIO_BAJA  = 1;
+    const PRIO_MEDIA = 2;
+    const PRIO_ALTA  = 3;
 
-    // ── Tipos de solicitud ──────────────────────────────────────────────────
-    const TIPOS = [
-        'licencia_medica'   => 'Licencia médica',
-        'vacaciones'        => 'Vacaciones',
-        'permiso_especial'  => 'Permiso especial',
-        'materiales'        => 'Materiales / Insumos',
-        'soporte_tecnico'   => 'Soporte técnico',
-        'capacitacion'      => 'Capacitación',
-        'otro'              => 'Otro',
+    const PRIORIDADES = [
+        self::PRIO_BAJA  => ['label' => 'Baja',  'color' => '#27ae60'],
+        self::PRIO_MEDIA => ['label' => 'Media', 'color' => '#e67e22'],
+        self::PRIO_ALTA  => ['label' => 'Alta',  'color' => '#c0392b'],
     ];
 
     protected $fillable = [
-        'sol_usr_id',
-        'sol_tipo',
+        'sol_numero',
+        'sol_tipo_id',
+        'sol_area_dest_id',
+        'sol_titulo',
         'sol_descripcion',
         'sol_prioridad',
-        'sol_estado',
-        'sol_supervisor_id',
-        'sol_obs_supervisor',
-        'sol_operador_id',
-        'sol_obs_operador',
+        'sol_estado_id',
+        'sol_sistema',
+        'sol_usr_solicita',
+        'sol_usr_supervisor',
+        'sol_usr_asignado',
+        'sol_resolucion',
+        'sol_fecha_envio',
+        'sol_fecha_aprobacion',
+        'sol_fecha_cierre',
     ];
 
     protected $casts = [
-        'sol_id'            => 'integer',
-        'sol_usr_id'        => 'integer',
-        'sol_supervisor_id' => 'integer',
-        'sol_operador_id'   => 'integer',
-        'sol_creado'        => 'datetime',
-        'sol_actualizado'   => 'datetime',
+        'sol_id'              => 'integer',
+        'sol_tipo_id'         => 'integer',
+        'sol_area_dest_id'    => 'integer',
+        'sol_prioridad'       => 'integer',
+        'sol_estado_id'       => 'integer',
+        'sol_usr_solicita'    => 'integer',
+        'sol_usr_supervisor'  => 'integer',
+        'sol_usr_asignado'    => 'integer',
+        'sol_fecha_creacion'  => 'datetime',
+        'sol_fecha_envio'     => 'datetime',
+        'sol_fecha_aprobacion'=> 'datetime',
+        'sol_fecha_cierre'    => 'datetime',
+        'sol_actualizado'     => 'datetime',
     ];
 
     // ── Relaciones ──────────────────────────────────────────────────────────
-    public function solicitante()
+    public function tipo()       { return $this->belongsTo(TipoSol::class,  'sol_tipo_id',       'tipo_id'); }
+    public function area()       { return $this->belongsTo(AreaDest::class, 'sol_area_dest_id',  'area_id'); }
+    public function estado()     { return $this->belongsTo(EstadoSol::class,'sol_estado_id',     'est_id');  }
+    public function solicitante(){ return $this->belongsTo(User::class,     'sol_usr_solicita',  'usr_id');  }
+    public function supervisor() { return $this->belongsTo(User::class,     'sol_usr_supervisor','usr_id');  }
+    public function asignado()   { return $this->belongsTo(User::class,     'sol_usr_asignado',  'usr_id');  }
+
+    public function historial()
     {
-        return $this->belongsTo(User::class, 'sol_usr_id', 'usr_id');
+        return $this->hasMany(HistorialEstado::class, 'his_sol_id', 'sol_id')
+                    ->orderBy('his_fecha', 'asc');
     }
 
-    public function supervisor()
+    public function comentarios()
     {
-        return $this->belongsTo(User::class, 'sol_supervisor_id', 'usr_id');
-    }
-
-    public function operador()
-    {
-        return $this->belongsTo(User::class, 'sol_operador_id', 'usr_id');
+        return $this->hasMany(Comentario::class, 'com_sol_id', 'sol_id')
+                    ->orderBy('com_fecha', 'asc');
     }
 
     // ── Helpers de estado ───────────────────────────────────────────────────
-    public function esBorrador(): bool   { return $this->sol_estado === self::BORRADOR; }
-    public function esPendiente(): bool  { return $this->sol_estado === self::PENDIENTE; }
-    public function esAprobada(): bool   { return $this->sol_estado === self::APROBADA; }
-    public function esRechazada(): bool  { return $this->sol_estado === self::RECHAZADA; }
-    public function esEnProceso(): bool  { return $this->sol_estado === self::EN_PROCESO; }
-    public function esCompletada(): bool { return $this->sol_estado === self::COMPLETADA; }
-    public function esCancelada(): bool  { return $this->sol_estado === self::CANCELADA; }
+    public function esBorrador():   bool { return $this->sol_estado_id === self::EST_BORRADOR;    }
+    public function esEnviada():    bool { return $this->sol_estado_id === self::EST_ENVIADA;     }
+    public function esEnRevision(): bool { return $this->sol_estado_id === self::EST_EN_REVISION; }
+    public function esAprobada():   bool { return $this->sol_estado_id === self::EST_APROBADA;    }
+    public function esRechazada():  bool { return $this->sol_estado_id === self::EST_RECHAZADA;   }
+    public function esAsignada():   bool { return $this->sol_estado_id === self::EST_ASIGNADA;    }
+    public function esEnProgreso(): bool { return $this->sol_estado_id === self::EST_EN_PROGRESO; }
+    public function esResuelta():   bool { return $this->sol_estado_id === self::EST_RESUELTA;    }
+    public function esCerrada():    bool { return $this->sol_estado_id === self::EST_CERRADA;     }
 
     public function estaTerminada(): bool
     {
-        return in_array($this->sol_estado, [self::COMPLETADA, self::CANCELADA, self::RECHAZADA]);
+        return in_array($this->sol_estado_id, [self::EST_RECHAZADA, self::EST_CERRADA]);
     }
 
-    // ── Número legible (SOL-2026-00001) ─────────────────────────────────────
-    public function getNumeroAttribute(): string
+    public function estaActiva(): bool
     {
-        $anio = $this->sol_creado ? $this->sol_creado->format('Y') : date('Y');
-        return 'SOL-' . $anio . '-' . str_pad($this->sol_id, 5, '0', STR_PAD_LEFT);
+        return ! $this->estaTerminada();
     }
 
-    // ── Label y color del estado (para vistas) ──────────────────────────────
-    public function getEstadoLabelAttribute(): string
-    {
-        return match($this->sol_estado) {
-            self::BORRADOR   => 'Borrador',
-            self::PENDIENTE  => 'Pendiente',
-            self::APROBADA   => 'Aprobada',
-            self::RECHAZADA  => 'Rechazada',
-            self::EN_PROCESO => 'En proceso',
-            self::COMPLETADA => 'Completada',
-            self::CANCELADA  => 'Cancelada',
-            default          => ucfirst($this->sol_estado),
-        };
-    }
-
-    public function getEstadoColorAttribute(): string
-    {
-        return match($this->sol_estado) {
-            self::BORRADOR   => '#6c757d',
-            self::PENDIENTE  => '#e67e22',
-            self::APROBADA   => '#2e6da4',
-            self::EN_PROCESO => '#8e44ad',
-            self::COMPLETADA => '#27ae60',
-            self::RECHAZADA  => '#c0392b',
-            self::CANCELADA  => '#95a5a6',
-            default          => '#333',
-        };
-    }
-
+    // ── Accessors de etiqueta / color ────────────────────────────────────────
     public function getPrioridadLabelAttribute(): string
     {
-        return match($this->sol_prioridad) {
-            self::PRIORIDAD_ALTA  => 'Alta',
-            self::PRIORIDAD_MEDIA => 'Media',
-            self::PRIORIDAD_BAJA  => 'Baja',
-            default               => ucfirst($this->sol_prioridad),
-        };
+        return self::PRIORIDADES[$this->sol_prioridad]['label'] ?? '—';
     }
 
     public function getPrioridadColorAttribute(): string
     {
-        return match($this->sol_prioridad) {
-            self::PRIORIDAD_ALTA  => '#c0392b',
-            self::PRIORIDAD_MEDIA => '#e67e22',
-            self::PRIORIDAD_BAJA  => '#27ae60',
-            default               => '#333',
-        };
+        return self::PRIORIDADES[$this->sol_prioridad]['color'] ?? '#333';
     }
 
-    public function getTipoLabelAttribute(): string
+    // ── Generación de número legible ─────────────────────────────────────────
+    public static function generarNumero(int $id): string
     {
-        return self::TIPOS[$this->sol_tipo] ?? ucfirst($this->sol_tipo);
+        return 'SOL-' . date('Y') . '-' . str_pad($id, 5, '0', STR_PAD_LEFT);
     }
 
     // ── Scopes ──────────────────────────────────────────────────────────────
-    public function scopeDelUsuario(Builder $query, int $usrId): Builder
+    public function scopeDelUsuario(Builder $q, int $usrId): Builder
     {
-        return $query->where('sol_usr_id', $usrId);
+        return $q->where('sol_usr_solicita', $usrId);
     }
 
-    public function scopeEnEstado(Builder $query, string|array $estado): Builder
+    public function scopeEnEstado(Builder $q, int|array $estado): Builder
     {
-        return $query->whereIn('sol_estado', (array) $estado);
+        return $q->whereIn('sol_estado_id', (array) $estado);
     }
 
-    public function scopePendientesRevision(Builder $query): Builder
+    public function scopePendientesRevision(Builder $q): Builder
     {
-        return $query->where('sol_estado', self::PENDIENTE);
+        return $q->whereIn('sol_estado_id', [self::EST_ENVIADA, self::EST_EN_REVISION]);
     }
 
-    public function scopeParaOperador(Builder $query): Builder
+    public function scopeParaOperador(Builder $q): Builder
     {
-        return $query->whereIn('sol_estado', [self::APROBADA, self::EN_PROCESO]);
+        return $q->whereIn('sol_estado_id', [
+            self::EST_APROBADA, self::EST_ASIGNADA, self::EST_EN_PROGRESO,
+        ]);
     }
 }

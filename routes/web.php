@@ -45,13 +45,16 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/{solicitud}',         [SolicitudController::class, 'update'])->name('update');
         Route::delete('/{solicitud}',      [SolicitudController::class, 'destroy'])->name('destroy');
 
-        // Transiciones de estado
-        Route::post('/{solicitud}/enviar',   [SolicitudController::class, 'enviar'])->name('enviar');
-        Route::post('/{solicitud}/aprobar',  [SolicitudController::class, 'aprobar'])->name('aprobar');
-        Route::post('/{solicitud}/rechazar', [SolicitudController::class, 'rechazar'])->name('rechazar');
-        Route::post('/{solicitud}/tomar',    [SolicitudController::class, 'tomar'])->name('tomar');
-        Route::post('/{solicitud}/completar',[SolicitudController::class, 'completar'])->name('completar');
-        Route::post('/{solicitud}/cancelar', [SolicitudController::class, 'cancelar'])->name('cancelar');
+        // Transiciones de estado (flujo ITSM 9 estados)
+        Route::post('/{solicitud}/enviar',        [SolicitudController::class, 'enviar'])->name('enviar');
+        Route::post('/{solicitud}/tomar-revision',[SolicitudController::class, 'tomarRevision'])->name('tomarRevision');
+        Route::post('/{solicitud}/aprobar',       [SolicitudController::class, 'aprobar'])->name('aprobar');
+        Route::post('/{solicitud}/rechazar',      [SolicitudController::class, 'rechazar'])->name('rechazar');
+        Route::post('/{solicitud}/asignar',       [SolicitudController::class, 'asignar'])->name('asignar');
+        Route::post('/{solicitud}/iniciar',       [SolicitudController::class, 'iniciar'])->name('iniciar');
+        Route::post('/{solicitud}/resolver',      [SolicitudController::class, 'resolver'])->name('resolver');
+        Route::post('/{solicitud}/cerrar',        [SolicitudController::class, 'cerrar'])->name('cerrar');
+        Route::post('/{solicitud}/comentar',      [SolicitudController::class, 'comentar'])->name('comentar');
     });
 
     /*
