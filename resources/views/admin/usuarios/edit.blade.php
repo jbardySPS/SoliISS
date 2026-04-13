@@ -63,7 +63,7 @@
                 <label>Nueva contraseña <span style="color:#aaa; font-weight:400;">(opcional)</span></label>
                 <input type="password" name="usr_password" autocomplete="new-password"
                        placeholder="Dejá vacío para no cambiar">
-                <div class="hint">Mínimo 8 caracteres si cambiás.</div>
+                <div class="hint">Mínimo 8 caracteres, al menos 1 mayúscula y 1 minúscula.</div>
                 @error('usr_password') <div class="error">{{ $message }}</div> @enderror
             </div>
             <div class="form-group">

@@ -252,7 +252,7 @@ Acceder desde el menú superior → **Usuarios**.
 |---|---|
 | Nombre completo | Nombre y apellido |
 | Email | Correo institucional (debe ser único) |
-| Contraseña | Mínimo 8 caracteres |
+| Contraseña | Mínimo 8 caracteres, al menos 1 mayúscula y 1 minúscula |
 | Rol | Solicitante / Supervisor / Operador / Admin |
 | Área / Sector | Sector al que pertenece (opcional) |
 | Usuario activo | Si está marcado, puede ingresar al sistema |

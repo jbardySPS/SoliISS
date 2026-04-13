@@ -53,7 +53,7 @@ class UserController extends Controller
         $datos = $request->validate([
             'usr_nombre'   => ['required', 'string', 'max:100'],
             'usr_email'    => ['required', 'email', 'max:100', Rule::unique(User::class, 'usr_email')],
-            'usr_password' => ['required', Password::min(8)],
+            'usr_password' => ['required', Password::min(8)->mixedCase()],
             'usr_rol_id'   => ['required', 'integer', 'in:1,2,3,4'],
             'usr_area'     => ['nullable', 'string', 'max:100'],
             'usr_activo'   => ['boolean'],
@@ -91,7 +91,7 @@ class UserController extends Controller
         $datos = $request->validate([
             'usr_nombre'   => ['required', 'string', 'max:100'],
             'usr_email'    => ['required', 'email', 'max:100', Rule::unique(User::class, 'usr_email')->ignore($usuario->usr_id, 'usr_id')],
-            'usr_password' => ['nullable', Password::min(8)],
+            'usr_password' => ['nullable', Password::min(8)->mixedCase()],
             'usr_rol_id'   => ['required', 'integer', 'in:1,2,3,4'],
             'usr_area'     => ['nullable', 'string', 'max:100'],
             'usr_activo'   => ['boolean'],

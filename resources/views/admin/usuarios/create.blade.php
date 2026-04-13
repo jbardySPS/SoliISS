@@ -59,7 +59,7 @@
             <div class="form-group">
                 <label>Contraseña</label>
                 <input type="password" name="usr_password" autocomplete="new-password">
-                <div class="hint">Mínimo 8 caracteres.</div>
+                <div class="hint">Mínimo 8 caracteres, al menos 1 mayúscula y 1 minúscula.</div>
                 @error('usr_password') <div class="error">{{ $message }}</div> @enderror
             </div>
             <div class="form-group">
