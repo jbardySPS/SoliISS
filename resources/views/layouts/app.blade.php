@@ -81,12 +81,30 @@
 
 {{-- Barra de navegación --}}
 <nav class="navbar">
-    <div class="navbar-brand">SOLI-<span>ISS</span></div>
+    <div style="display:flex; align-items:center; gap:24px;">
+        <a href="{{ route('dashboard') }}" class="navbar-brand" style="text-decoration:none; color:#fff;">
+            SOLI-<span>ISS</span>
+        </a>
+        @auth
+        <a href="{{ route('solicitudes.index') }}"
+           style="color:rgba(255,255,255,.8); text-decoration:none; font-size:13px;
+                  {{ request()->routeIs('solicitudes.*') ? 'color:#fff; font-weight:600; border-bottom:2px solid #7eb3e8;' : '' }}">
+            Solicitudes
+        </a>
+        @if(Auth::user()->esAdmin())
+        <a href="{{ route('admin.usuarios.index') }}"
+           style="color:rgba(255,255,255,.8); text-decoration:none; font-size:13px;
+                  {{ request()->routeIs('admin.usuarios.*') ? 'color:#fff; font-weight:600; border-bottom:2px solid #7eb3e8;' : '' }}">
+            Usuarios
+        </a>
+        @endif
+        @endauth
+    </div>
 
     @auth
     <div class="navbar-user">
-        <span>{{ Auth::user()->USR_NOMBRE }}</span>
-        <span class="badge">{{ Auth::user()->rol->ROL_NOMBRE ?? 'Usuario' }}</span>
+        <span>{{ Auth::user()->usr_nombre }}</span>
+        <span class="badge">{{ Auth::user()->rol->rol_nombre ?? 'Usuario' }}</span>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit">Cerrar sesión</button>

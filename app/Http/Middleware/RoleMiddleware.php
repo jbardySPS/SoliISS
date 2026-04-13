@@ -33,7 +33,7 @@ class RoleMiddleware
         // Convertir los parámetros a enteros
         $rolesPermitidos = array_map('intval', $roles);
 
-        if (! in_array($usuario->USR_ROL_ID, $rolesPermitidos)) {
+        if (! in_array($usuario->usr_rol_id, $rolesPermitidos)) {
             abort(403, 'No tenés permisos para acceder a esta sección.');
         }
 
