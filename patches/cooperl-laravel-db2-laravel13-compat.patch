@@ -1,0 +1,22 @@
+--- a/src/Schema/Grammars/DB2Grammar.php
++++ b/src/Schema/Grammars/DB2Grammar.php
+@@ -57,14 +57,14 @@ class DB2Grammar extends Grammar
+      *
+      * @return string
+      */
+-    public function compileTableExists()
++    public function compileTableExists($schema = null, $table = null)
+     {
+         return 'select * from information_schema.tables where table_schema = upper(?) and table_name = upper(?)';
+     }
+
+     /**
+      * Compile the query to determine the list of columns.
+      *
+      * @return string
+      */
+-    public function compileColumnExists()
++    public function compileColumnExists($schema = null, $table = null)
+     {
+         return 'select column_name from information_schema.columns where table_schema = upper(?) and table_name = upper(?)';
+     }

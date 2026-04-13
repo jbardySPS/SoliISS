@@ -50,7 +50,11 @@
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
+            "@php artisan package:discover --ansi",
+            "@patch-db2"
+        ],
+        "patch-db2": [
+            "patch -p1 -N --no-backup-if-mismatch -d vendor/cooperl/laravel-db2 < patches/cooperl-laravel-db2-laravel13-compat.patch || true"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
